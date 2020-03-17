@@ -5,11 +5,19 @@
     <artifactId>aws-sigv4-auth-cassandra-java-driver-plugin</artifactId>
     <version>4.0.0</version>
     <name>AWS SigV4 Auth Java Driver 4.x Plugin</name>
+    <description>A Plugin to allow SigV4 authentication for Java Cassandra drivers with Amazon MCS</description>
+    <url>https://github.com/aws/aws-sigv4-auth-cassandra-java-driver-plugin</url>
     <organization>
         <name>Amazon Web Services</name>
         <url>https://aws.amazon.com</url>
     </organization>
     <inceptionYear>2020</inceptionYear>
+
+    <scm>
+        <connection>scm:git:https://github.com/aws/aws-sigv4-auth-cassandra-java-driver-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:aws/aws-sigv4-auth-cassandra-java-driver-plugin.git</developerConnection>
+        <url>https://github.com/aws/aws-sigv4-auth-cassandra-java-driver-plugin</url>
+    </scm>
 
     <licenses>
         <license>
@@ -77,9 +85,55 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.1.1</version>
                 <configuration>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>sonatype-nexus-staging</serverId>
+                    <nexusUrl>https://aws.oss.sonatype.org</nexusUrl>
+                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
             </plugin>
             <plugin>
