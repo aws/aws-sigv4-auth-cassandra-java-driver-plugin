@@ -1,13 +1,16 @@
 # What
 
-This package implements a SigV4 auth plugin for the official Datastax Cassandra driver. It depends on the AWS Java SDK,
-using `AWSCredentialsProvider` to obtain SigV4 credentials. Because the IAuthenticator interface operates at the level
-of `InetSocketAddress`, it cannot infer the region from the endpoint. Instead, you can either provide the region in the
-constructor programmatically, via the `AWS_REGION` environment variable, or via the `aws.region` system property to
-match the endpoint you're communicating with.
+This package implements an authentication plugin for the open-source Datastax Java Driver for Apache Cassandra. The driver enables you to add authentication information to your API requests using the AWS Signature Version 4 Process (SigV4). Using the plugin, you can provide users and applications short-term credentials to access Amazon Managed Apachce Cassandra Service (MCS) using AWS Identity and Access Management (IAM) users and roles.
 
-The full documentation for the plugin can be found at
-https://docs.aws.amazon.com/mcs/latest/devguide/programmatic.credentials.html#programmatic.credentials.SigV4_MCS (Coming soon)
+The plugin depends on the AWS SDK for Java. It uses `AWSCredentialsProvider` to obtain credentials. Because the IAuthenticator interface operates at the level of `InetSocketAddress`, you must specify the service endpoint to use for the connection.
+You can provide the Region in the constructor programmatically, via the `AWS_REGION` environment variable, or via the `aws.region` system property.
+
+The full documentation for the plugin is available at
+https://docs.aws.amazon.com/mcs/latest/devguide/programmatic.credentials.html#programmatic.credentials.SigV4_MCS (Coming soon).
+
+# Example Usage
+
+For example code, see https://github.com/aws-samples/aws-sigv4-auth-cassandra-java-driver-examples (Coming soon)
 
 # Using the Plugin
 
@@ -121,7 +124,3 @@ The following is an example of this.
         }
     }
 ```
-
-# Example Usage
-
-Please see the example code at https://github.com/aws-samples/aws-sigv4-auth-cassandra-java-driver-examples
