@@ -46,6 +46,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -75,6 +77,11 @@ public class SigV4AuthProvider implements AuthProvider {
         // no sensitive information
         SIGV4_INITIAL_RESPONSE = initialResponse.asReadOnlyBuffer();
     }
+
+    private static final int AWS_FRACTIONAL_TIMESTAMP_DIGITS = 3; // SigV4 expects three digits of nanoseconds for timestamps
+    private static final DateTimeFormatter timestampFormatter =
+        (new DateTimeFormatterBuilder()).appendInstant(AWS_FRACTIONAL_TIMESTAMP_DIGITS).toFormatter();
+
 
     private static final byte[] NONCE_KEY = "nonce=".getBytes(StandardCharsets.UTF_8);
     private static final int EXPECTED_NONCE_LENGTH = 32;
@@ -206,7 +213,7 @@ public class SigV4AuthProvider implements AuthProvider {
                     String.format("signature=%s,access_key=%s,amzdate=%s",
                                   signature,
                                   credentials.getAWSAccessKeyId(),
-                                  requestTimestamp);
+                                  timestampFormatter.format(requestTimestamp));
 
                 if (credentials instanceof AWSSessionCredentials) {
                     response = response + ",session_token=" + ((AWSSessionCredentials)credentials).getSessionToken();
@@ -270,7 +277,7 @@ public class SigV4AuthProvider implements AuthProvider {
 
         String stringToSign = String.format("%s%n%s%n%s%n%s",
                                             SignerConstants.AWS4_SIGNING_ALGORITHM,
-                                            requestTimestamp,
+                                            timestampFormatter.format(requestTimestamp),
                                             signingScope,
                                             sha256Digest(canonicalRequest));
 
@@ -297,7 +304,7 @@ public class SigV4AuthProvider implements AuthProvider {
                 String.format("X-Amz-Credential=%s%%2F%s",
                               accessKey,
                               URLEncoder.encode(signingScope, StandardCharsets.UTF_8.name())),
-                "X-Amz-Date=" + URLEncoder.encode(requestTimestamp.toString(), StandardCharsets.UTF_8.name()),
+                "X-Amz-Date=" + URLEncoder.encode(timestampFormatter.format(requestTimestamp), StandardCharsets.UTF_8.name()),
                 AMZ_EXPIRES_HEADER
             );
 

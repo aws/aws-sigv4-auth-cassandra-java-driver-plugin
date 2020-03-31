@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>software.aws.mcs</groupId>
     <artifactId>aws-sigv4-auth-cassandra-java-driver-plugin</artifactId>
-    <version>4.0.1</version>
+    <version>4.0.2</version>
     <name>AWS SigV4 Auth Java Driver 4.x Plugin</name>
     <description>A Plugin to allow SigV4 authentication for Java Cassandra drivers with Amazon MCS</description>
     <url>https://github.com/aws/aws-sigv4-auth-cassandra-java-driver-plugin</url>
