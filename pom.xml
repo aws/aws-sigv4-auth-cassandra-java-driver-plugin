@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>software.aws.mcs</groupId>
     <artifactId>aws-sigv4-auth-cassandra-java-driver-plugin</artifactId>
-    <version>4.0.0</version>
+    <version>4.0.1</version>
     <name>AWS SigV4 Auth Java Driver 4.x Plugin</name>
     <description>A Plugin to allow SigV4 authentication for Java Cassandra drivers with Amazon MCS</description>
     <url>https://github.com/aws/aws-sigv4-auth-cassandra-java-driver-plugin</url>
@@ -152,6 +152,26 @@
                             <goal>update-file-header</goal>
                         </goals>
                         <phase>process-sources</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0-M3</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[1.8,1.9)</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

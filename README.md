@@ -1,3 +1,8 @@
+# IMPORTANT: Java 8 Support
+
+If you are using Java 8, you need to use at least version 4.0.1 of the plugin. The 4.0.0 version was built with JDK9,
+which includes a breaking API change in ByteBuffer, despite targetting Java 8 source and bytecode.
+
 # What
 
 This package implements an authentication plugin for the open-source Datastax Java Driver for Apache Cassandra. The driver enables you to add authentication information to your API requests using the AWS Signature Version 4 Process (SigV4). Using the plugin, you can provide users and applications short-term credentials to access Amazon Managed Apachce Cassandra Service (MCS) using AWS Identity and Access Management (IAM) users and roles.
