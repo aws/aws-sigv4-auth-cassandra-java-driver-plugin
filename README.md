@@ -1,7 +1,6 @@
-# IMPORTANT: Java 8 Support
+# IMPORTANT: Latest Version
 
-If you are using Java 8, you need to use at least version 4.0.1 of the plugin. The 4.0.0 version was built with JDK9,
-which includes a breaking API change in ByteBuffer, despite targetting Java 8 source and bytecode.
+The current version is 4.0.2. The 4.0.0 version was built with JDK9, which includes a breaking API change in ByteBuffer, despite targetting Java 8 source and bytecode. The 4.0.1 version has a bug related to `Instant.toString()`, which causes signature mismatch errors on JDK9 and later.
 
 # What
 
