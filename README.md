@@ -4,13 +4,13 @@ The current version is 4.0.2. The 4.0.0 version was built with JDK9, which inclu
 
 # What
 
-This package implements an authentication plugin for the open-source Datastax Java Driver for Apache Cassandra. The driver enables you to add authentication information to your API requests using the AWS Signature Version 4 Process (SigV4). Using the plugin, you can provide users and applications short-term credentials to access Amazon Managed Apachce Cassandra Service (MCS) using AWS Identity and Access Management (IAM) users and roles.
+This package implements an authentication plugin for the open-source Datastax Java Driver for Apache Cassandra. The driver enables you to add authentication information to your API requests using the AWS Signature Version 4 Process (SigV4). Using the plugin, you can provide users and applications short-term credentials to access Amazon Keyspaces (for Apache Cassandra) using AWS Identity and Access Management (IAM) users and roles.
 
 The plugin depends on the AWS SDK for Java. It uses `AWSCredentialsProvider` to obtain credentials. Because the IAuthenticator interface operates at the level of `InetSocketAddress`, you must specify the service endpoint to use for the connection.
 You can provide the Region in the constructor programmatically, via the `AWS_REGION` environment variable, or via the `aws.region` system property.
 
 The full documentation for the plugin is available at
-https://docs.aws.amazon.com/mcs/latest/devguide/programmatic.credentials.html#programmatic.credentials.SigV4_MCS.
+https://docs.aws.amazon.com/keyspaces/latest/devguide/programmatic.credentials.html#programmatic.credentials.SigV4_KEYSPACES.
 
 # Example Usage
 
@@ -18,15 +18,15 @@ For example code, see https://github.com/aws-samples/aws-sigv4-auth-cassandra-ja
 
 # Using the Plugin
 
-The following sections describe how to use the authentication plugin for the open-source DataStax Java Driver for Cassandra to access Amazon Managed Apache Cassandra Service.
+The following sections describe how to use the authentication plugin for the open-source DataStax Java Driver for Cassandra to access Amazon Keyspaces.
 
 ## SSL Configuration
 
-The first step is to get an Amazon digital certificate to encrypt your connections using Transport Layer Security (TLS). The DataStax Java driver must use an SSL trust store so that the client SSL engine can validate the Amazon Managed Cassandra Service certificate on connection. To use the trust store and create a certificate, see [Using a Cassandra Java Client Driver to Access Amazon Managed Cassandra Service Programmatically](https://docs.aws.amazon.com/mcs/latest/devguide/programmatic.drivers.html#using_java_driver).
+The first step is to get an Amazon digital certificate to encrypt your connections using Transport Layer Security (TLS). The DataStax Java driver must use an SSL trust store so that the client SSL engine can validate the Amazon Keyspaces certificate on connection. To use the trust store and create a certificate, see [Using a Cassandra Java Client Driver to Access Amazon Keyspaces Programmatically](https://docs.aws.amazon.com/keyspaces/latest/devguide/programmatic.drivers.html#using_java_driver).
 
 ## Region Configuration
 
-Before you can start using the plugin, you must configure the AWS Region that the plugin will use when authenticating. This is required because SigV4 signatures are Region-specific. For example, if you are connecting to the `cassandra.us-east-2.amazonaws.com` endpoint, the Region must be `us-east-2`. For a list of available AWS Regions and endpoints, see [Service Endpoints for Amazon Managed Cassandra Service](https://docs.aws.amazon.com/mcs/latest/devguide/programmatic.endpoints.html).
+Before you can start using the plugin, you must configure the AWS Region that the plugin will use when authenticating. This is required because SigV4 signatures are Region-specific. For example, if you are connecting to the `cassandra.us-east-2.amazonaws.com` endpoint, the Region must be `us-east-2`. For a list of available AWS Regions and endpoints, see [Service Endpoints for Amazon Keyspaces](https://docs.aws.amazon.com/keyspaces/latest/devguide/programmatic.endpoints.html).
 
 You can specify the Region using one of the following four methods:
 
@@ -72,16 +72,16 @@ The authentication plugin supports version 4.x of the DataStax Java Driver for C
 
 ## How to use the Authentication Plugin
 
-When using the open-source DataStax Java driver, the connection to your Amazon Managed Cassandra Service cluster is represented by the `CqlSession` class. To create the `CqlSession`, you can either configure it programmatically using the `CqlSessionBuilder` class (accessed via `CqlSession.builder()`) or with the configuration file.
+When using the open-source DataStax Java driver, the connection to your Amazon Keyspaces endpoint is represented by the `CqlSession` class. To create the `CqlSession`, you can either configure it programmatically using the `CqlSessionBuilder` class (accessed via `CqlSession.builder()`) or with the configuration file.
 
 ### Programmatically Configure the Driver
 
-When using the DataStax Java driver, you interact with Amazon Managed Cassandra Service primarily through the `CQLSession` class. You can create an instance of `CqlSession` using the `CqlSession.builder()` function. `CqlSession.builder()` enables you to specify another authentication provider for the session by using the with `withAuthProvider` function.
+When using the DataStax Java driver, you interact with Amazon Keyspaces primarily through the `CQLSession` class. You can create an instance of `CqlSession` using the `CqlSession.builder()` function. `CqlSession.builder()` enables you to specify another authentication provider for the session by using the with `withAuthProvider` function.
 
 To use the authentication plugin, you set a Region-specific instance of SigV4AuthProvider as the authentication provider, as in the following example.
 
-1. Call `addContactPoints` on the builder with a collection of `java.net.InetSocketAddress` instances corresponding to the endpoints for your Region. Contact points are the endpoints that the driver will connect to. For a full list of endpoints and Regions in the documentation, see [Service Endpoints for Amazon Managed Cassandra Service](https://docs.aws.amazon.com/mcs/latest/devguide/programmatic.endpoints.html).
-1. Add an SSL context by calling `withSslContext` on the builder. This uses the trust store defined previously to negotiate SSL on the connection to the endpoints. SSL is required for Amazon Managed Cassandra Service. Without this setting, connections will time out and fail.
+1. Call `addContactPoints` on the builder with a collection of `java.net.InetSocketAddress` instances corresponding to the endpoints for your Region. Contact points are the endpoints that the driver will connect to. For a full list of endpoints and Regions in the documentation, see [Service Endpoints for Amazon Keyspaces](https://docs.aws.amazon.com/keyspaces/latest/devguide/programmatic.endpoints.html).
+1. Add an SSL context by calling `withSslContext` on the builder. This uses the trust store defined previously to negotiate SSL on the connection to the endpoints. SSL is required for Amazon Keyspaces. Without this setting, connections will time out and fail.
 1. Set the local data center to the region name, in this example it is `us-east-2`. The local data center is used by the driver for routing of requests, and it is required when the builder is constructed with `addContactPoints`.
 1. Set the authentication provider to a new instance of `software.aws.mcs.auth.SigV4AuthProvider`. The `SigV4AuthProvider` is the authentication handler provided by the plugin for performing SigV4 authentication. You can specify the Region for the endpoints that you’re using in the constructor for `SigV4AuthProvider`, as in the following example. Or, you can set the environment variable or system property as shown previously.
 
