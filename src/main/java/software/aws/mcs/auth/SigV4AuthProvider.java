@@ -275,7 +275,7 @@ public class SigV4AuthProvider implements AuthProvider {
 
         String canonicalRequest = canonicalizeRequest(credentials.getAWSAccessKeyId(), signingScope, requestTimestamp, nonceHash);
 
-        String stringToSign = String.format("%s%n%s%n%s%n%s",
+        String stringToSign = String.format("%s\n%s\n%s\n%s",
                                             SignerConstants.AWS4_SIGNING_ALGORITHM,
                                             timestampFormatter.format(requestTimestamp),
                                             signingScope,
@@ -313,7 +313,7 @@ public class SigV4AuthProvider implements AuthProvider {
 
         String queryString = String.join("&", queryStringHeaders);
 
-        return String.format("PUT%n/authenticate%n%s%nhost:%s%n%nhost%n%s",
+        return String.format("PUT\n/authenticate\n%s\nhost:%s\n\nhost\n%s",
                              queryString, CANONICAL_SERVICE, payloadHash);
     }
 

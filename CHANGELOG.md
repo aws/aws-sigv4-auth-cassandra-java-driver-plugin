@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [4.0.3] - 2020-05-15
+
+Updated the plugin to fix newlines used in the SigV4 signature on Windows. This resolves [Issue
+#12](https://github.com/aws/aws-sigv4-auth-cassandra-java-driver-plugin/issues/12).
+
 ## [4.0.2] - 2020-03-31
 
 Changed the plugin to use a `DateTimeFormatter` to ensure precisely 3 digits of millisecond precision for the SigV4
