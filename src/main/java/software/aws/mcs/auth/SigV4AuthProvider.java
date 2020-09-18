@@ -1,41 +1,20 @@
-package software.aws.mcs.auth;
-
-/*-
- * #%L
- * AWS SigV4 Auth Java Driver 4.x Plugin
- * %%
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+/*
+ *   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License").
+ *   You may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
  */
 
-import com.amazonaws.SDKGlobalConfiguration;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSSessionCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.auth.internal.AWS4SignerUtils;
-import com.amazonaws.auth.internal.SignerConstants;
-
-import com.datastax.oss.driver.api.core.auth.AuthenticationException;
-import com.datastax.oss.driver.api.core.auth.Authenticator;
-import com.datastax.oss.driver.api.core.auth.AuthProvider;
-import com.datastax.oss.driver.api.core.config.DriverOption;
-import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.metadata.EndPoint;
-
-import org.apache.commons.codec.binary.Hex;
+package software.aws.mcs.auth;
 
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
@@ -45,21 +24,30 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.codec.binary.Hex;
+
+import com.amazonaws.SDKGlobalConfiguration;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSSessionCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.internal.AWS4SignerUtils;
+import com.amazonaws.auth.internal.SignerConstants;
+import com.datastax.driver.core.AuthProvider;
+import com.datastax.driver.core.Authenticator;
+import com.datastax.driver.core.exceptions.AuthenticationException;
+
 /**
- * This auth provider can be used with the Amazon MCS service to
+ * This auth provider can be used with Amazon Keyspaces service to
  * authenticate with SigV4. It uses the AWSCredentialsProvider
  * interface provided by the official AWS Java SDK to provide
  * credentials for signing.
@@ -75,7 +63,8 @@ public class SigV4AuthProvider implements AuthProvider {
         // According to the driver docs, it's safe to reuse a
         // read-only buffer, and in our case, the initial response has
         // no sensitive information
-        SIGV4_INITIAL_RESPONSE = initialResponse.asReadOnlyBuffer();
+        // Note that the older version of the driver does not accept a read only buffer.
+        SIGV4_INITIAL_RESPONSE = initialResponse;
     }
 
     private static final int AWS_FRACTIONAL_TIMESTAMP_DIGITS = 3; // SigV4 expects three digits of nanoseconds for timestamps
@@ -100,39 +89,6 @@ public class SigV4AuthProvider implements AuthProvider {
      */
     public SigV4AuthProvider() {
         this(DefaultAWSCredentialsProviderChain.getInstance(), null);
-    }
-
-    private final static DriverOption REGION_OPTION = new DriverOption() {
-            public String getPath() {
-                return "advanced.auth-provider.aws-region";
-            }
-        };
-
-    /**
-     * This constructor is provided so that the driver can create
-     * instances of this class based on configuration. For example:
-     *
-     * <pre>
-     * datastax-java-driver.advanced.auth-provider = {
-     *     aws-region = us-east-2
-     *     class = software.aws.mcs.auth.SigV4AuthProvider
-     * }
-     * </pre>
-     *
-     * The signing region is taken from the
-     * datastax-java-driver.advanced.auth-provider.aws-region
-     * property, from the "aws.region" system property, or the
-     * AWS_DEFAULT_REGION environment variable, in that order of
-     * preference.
-     *
-     * For programmatic construction, use {@link #SigV4AuthProvider()}
-     * or {@link #SigV4AuthProvider(AWSCredentialsProvider, String)}.
-     *
-     * @param driverContext the driver context for instance creation.
-     * Unused for this plugin.
-     */
-    public SigV4AuthProvider(DriverContext driverContext) {
-        this(driverContext.getConfig().getDefaultProfile().getString(REGION_OPTION));
     }
 
     /**
@@ -174,34 +130,24 @@ public class SigV4AuthProvider implements AuthProvider {
     }
 
     @Override
-    public Authenticator newAuthenticator(EndPoint endPoint, String authenticator)
-        throws AuthenticationException {
+    public Authenticator newAuthenticator(InetSocketAddress inetSocketAddress, String s) throws AuthenticationException {
         return new SigV4Authenticator();
-    }
-
-    @Override
-    public void onMissingChallenge(EndPoint endPoint) {
-        throw new AuthenticationException(endPoint, "SigV4 requires a challenge from the endpoint. None was sent");
-    }
-
-    @Override
-    public void close() {
-        // We do not open any resources, so this is a NOOP
     }
 
     /**
      * This authenticator performs SigV4 MCS authentication.
      */
     public class SigV4Authenticator implements Authenticator {
+
         @Override
-        public CompletionStage<ByteBuffer> initialResponse() {
-            return CompletableFuture.completedFuture(SIGV4_INITIAL_RESPONSE);
+        public byte[] initialResponse() {
+            return SIGV4_INITIAL_RESPONSE.array();
         }
 
         @Override
-        public CompletionStage<ByteBuffer> evaluateChallenge(ByteBuffer challenge) {
+        public byte[] evaluateChallenge(byte[] bytes) {
             try {
-                byte[] nonce = extractNonce(challenge);
+                byte[] nonce = extractNonce(ByteBuffer.wrap(bytes));
 
                 Instant requestTimestamp = Instant.now();
 
@@ -219,16 +165,17 @@ public class SigV4AuthProvider implements AuthProvider {
                     response = response + ",session_token=" + ((AWSSessionCredentials)credentials).getSessionToken();
                 }
 
-                return CompletableFuture.completedFuture(ByteBuffer.wrap(response.getBytes(StandardCharsets.UTF_8)));
+                return response.getBytes(StandardCharsets.UTF_8);
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException("This platform does not support the UTF-8encoding", e);
             }
         }
 
         @Override
-        public CompletionStage<Void> onAuthenticationSuccess(ByteBuffer token) {
-            return CompletableFuture.completedFuture(null);
+        public void onAuthenticationSuccess(byte[] bytes) {
+            //do nothing;
         }
+
 
     }
 
@@ -288,6 +235,7 @@ public class SigV4AuthProvider implements AuthProvider {
 
         byte[] signature = hmacSHA256(stringToSign, signingKey);
 
+        //TODO: Requires a later version of commons that legacy applications may not use. Consider changing.
         return Hex.encodeHexString(signature, true);
     }
 
