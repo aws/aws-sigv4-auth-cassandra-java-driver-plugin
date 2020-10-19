@@ -2,10 +2,10 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>software.aws.mcs</groupId>
-    <artifactId>aws-sigv4-auth-cassandra-java-driver-plugin</artifactId>
+    <artifactId>aws-sigv4-auth-cassandra-java-driver-plugin_3</artifactId>
     <version>4.0.3</version>
-    <name>AWS SigV4 Auth Java Driver 4.x Plugin</name>
-    <description>A Plugin to allow SigV4 authentication for Java Cassandra drivers with Amazon MCS</description>
+    <name>AWS SigV4 Auth Java Driver 3.x Plugin</name>
+    <description>A Plugin to allow SigV4 authentication for Java Cassandra drivers with Amazon Keyspaces</description>
     <url>https://github.com/aws/aws-sigv4-auth-cassandra-java-driver-plugin</url>
     <organization>
         <name>Amazon Web Services</name>
@@ -51,10 +51,11 @@
             <version>1.11.717</version>
         </dependency>
         <dependency>
-            <groupId>com.datastax.oss</groupId>
-            <artifactId>java-driver-core</artifactId>
-            <version>4.4.0</version>
+            <groupId>com.datastax.cassandra</groupId>
+            <artifactId>cassandra-driver-core</artifactId>
+            <version>3.7.2</version>
         </dependency>
+
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
@@ -111,7 +112,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
+           <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.6</version>

@@ -1,66 +1,63 @@
-package software.aws.mcs.auth;
-
-/*-
- * #%L
- * AWS SigV4 Auth Java Driver 4.x Plugin
- * %%
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+/*
+ *   Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *   Licensed under the Apache License, Version 2.0 (the "License").
+ *   You may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
  */
 
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.*;
+package software.aws.mcs.auth;
 
-import software.aws.mcs.auth.SigV4AuthProvider;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import javax.net.ssl.SSLContext;
-
+/**
+ * Test Command line to verify auth mechanism.
+ * To use specific endpoint pass args -> <Contact Point> <port>
+ *
+ * Specify other properties by using environment variables:
+ * AWS_ACCESS_KEY_ID -> access key
+ * AWS_SECRET_ACCESS_KEY -> secret password
+ * AWS_REGION -> region to use.
+ */
 public class TestSigV4 {
-    static String[] DEFAULT_CONTACT_POINTS = {"127.0.0.1:9042"};
+    static String DEFAULT_CONTACT_POINT = "cassandra.us-east-1.amazonaws.com";
 
-    public static void main(String[] args) throws Exception {
-        String[] contactPointsRaw = DEFAULT_CONTACT_POINTS;
-
-        if (args.length == 1) {
-            contactPointsRaw = args[0].split(",");
-        } else if (args.length > 1) {
-            System.out.println("Usage: TestSigV4 [<contact points, comma separated, 'IP:port' format>]");
-            System.exit(-1);
+    public static void main(String[] args) throws Exception
+    {
+        String endPoint = DEFAULT_CONTACT_POINT;
+        if (args.length > 0) {
+            endPoint = args[0];
+        }
+        String port = "9142";
+        if (args.length > 1) {
+            port = args[1];
         }
 
-        ArrayList<InetSocketAddress> contactPoints = new ArrayList<>(contactPointsRaw.length);
-
-        for (int i = 0; i < contactPointsRaw.length; i++) {
-            String[] parts = contactPointsRaw[i].split(":");
-            contactPoints.add(InetSocketAddress.createUnresolved(parts[0], Integer.parseInt(parts[1])));
-        }
-
-        System.out.println("Using endpoints: " + contactPoints);
+        System.out.println(String.format("Using endpoint: %s:%s", endPoint, port));
+        int portNumber = Integer.parseInt(port);
 
         // The CqlSession object is the main entry point of the driver.
         // It holds the known state of the actual Cassandra cluster (notably the Metadata).
         // This class is thread-safe, you should create a single instance (per target Cassandra cluster), and share
         // it throughout your application.
-        try (CqlSession session = CqlSession.builder()
-             .addContactPoints(contactPoints)
-             .withAuthProvider(new SigV4AuthProvider())
-             .withSslContext(SSLContext.getDefault())
-             .withLocalDatacenter("dc1")
-             .build()) {
+        Session session = Cluster.builder()
+                                 .addContactPoint(endPoint)
+                                 .withPort(portNumber)
+                                 .withAuthProvider(new SigV4AuthProvider())
+                                 .withSSL()
+                                 .build()
+                                 .connect();
 
             // We use execute to send a query to Cassandra. This returns a ResultSet, which is essentially a collection
             // of Row objects.
@@ -71,6 +68,5 @@ public class TestSigV4 {
             // Extract the value of the first (and only) column from the row.
             String releaseVersion = row.getString("release_version");
             System.out.printf("Cassandra version is: %s%n", releaseVersion);
-        }
     }
 }

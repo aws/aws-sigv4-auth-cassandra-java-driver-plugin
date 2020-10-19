@@ -1,4 +1,7 @@
 # CHANGELOG
+## [3.0.3] - 2020-10-18
+
+Added support for 3.x DataStax Driver in the form of additional branch: 3.x-Driver-Compatible.
 
 ## [4.0.3] - 2020-05-15
 
