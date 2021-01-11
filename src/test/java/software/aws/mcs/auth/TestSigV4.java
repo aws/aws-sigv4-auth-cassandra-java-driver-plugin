@@ -60,7 +60,7 @@ public class TestSigV4 {
         }
         if (region == null) {
             throw new IllegalStateException(
-                    "When specifying contact points you must specify a localdc, in this sample we use the AWS_REGION env variable, or aws.region system property"
+                    "When specifying contact points you must specify a localdc. In this sample we use the AWS_REGION env variable, or aws.region system property value as localdc"
             );
         }
 
