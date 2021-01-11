@@ -60,7 +60,7 @@ public class TestSigV4 {
         }
         if (region == null) {
             throw new IllegalStateException(
-                    "When specifying contact points you must specify a localdc, in this sample we reuse the AWS_REGION env variable, or aws.region system property"
+                    "When specifying contact points you must specify a localdc, in this sample we use the AWS_REGION env variable, or aws.region system property"
             );
         }
 
@@ -73,7 +73,7 @@ public class TestSigV4 {
              .addContactPoints(contactPoints)
              .withAuthProvider(new SigV4AuthProvider())
              .withSslContext(SSLContext.getDefault())
-                .withLocalDatacenter(region)
+             .withLocalDatacenter(region)
              .build()) {
 
             // We use execute to send a query to Cassandra. This returns a ResultSet, which is essentially a collection

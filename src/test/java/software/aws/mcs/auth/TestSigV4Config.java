@@ -64,7 +64,7 @@ public class TestSigV4Config {
         }
         if (region == null) {
             throw new IllegalStateException(
-                    "A region must be specified by constructor, AWS_REGION env variable, or aws.region system property"
+                    "When specifying contact points you must specify a localdc, in this sample we use the AWS_REGION env variable, or aws.region system property"
             );
         }
 
