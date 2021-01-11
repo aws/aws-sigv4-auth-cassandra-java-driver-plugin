@@ -22,15 +22,19 @@ package software.aws.mcs.auth;
 
 import com.amazonaws.SDKGlobalConfiguration;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.*;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
 
-import software.aws.mcs.auth.SigV4AuthProvider;
-
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import javax.net.ssl.SSLContext;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.util.ArrayList;
 
-public class TestSigV4 {
+public class TestSigV4Config {
     static String[] DEFAULT_CONTACT_POINTS = {"127.0.0.1:9042"};
 
     public static void main(String[] args) throws Exception {
@@ -64,15 +68,20 @@ public class TestSigV4 {
             );
         }
 
+        //By default the reference.conf is loaded by the driver which contains all defaults.
+        //You can override this by providing reference.conf on the classpath
+        //to isolate test you can load conf with a custom name
+        URL url = TestSigV4Config.class.getClassLoader().getResource("keyspaces-reference.conf");
+
+        File file = new File(url.toURI());
         // The CqlSession object is the main entry point of the driver.
         // It holds the known state of the actual Cassandra cluster (notably the Metadata).
         // This class is thread-safe, you should create a single instance (per target Cassandra cluster), and share
         // it throughout your application.
         try (CqlSession session = CqlSession.builder()
-             .addContactPoints(contactPoints)
-             .withAuthProvider(new SigV4AuthProvider())
-             .withSslContext(SSLContext.getDefault())
-             .withLocalDatacenter(region)
+                .withConfigLoader(DriverConfigLoader.fromFile(file))
+                .addContactPoints(contactPoints)
+                .withLocalDatacenter(region)
              .build()) {
 
             // We use execute to send a query to Cassandra. This returns a ResultSet, which is essentially a collection
