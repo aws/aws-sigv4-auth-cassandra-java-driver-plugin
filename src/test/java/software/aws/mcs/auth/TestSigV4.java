@@ -69,7 +69,6 @@ public class TestSigV4 {
         // This class is thread-safe, you should create a single instance (per target Cassandra cluster), and share
         // it throughout your application.
         try (CqlSession session = CqlSession.builder()
-
              .addContactPoints(contactPoints)
              .withAuthProvider(new SigV4AuthProvider())
              .withSslContext(SSLContext.getDefault())
