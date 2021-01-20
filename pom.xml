@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>software.aws.mcs</groupId>
     <artifactId>aws-sigv4-auth-cassandra-java-driver-plugin</artifactId>
-    <version>4.0.3</version>
+    <version>4.0.4</version>
     <name>AWS SigV4 Auth Java Driver 4.x Plugin</name>
     <description>A Plugin to allow SigV4 authentication for Java Cassandra drivers with Amazon MCS</description>
     <url>https://github.com/aws/aws-sigv4-auth-cassandra-java-driver-plugin</url>
@@ -46,9 +46,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-core</artifactId>
-            <version>1.11.717</version>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>com.datastax.oss</groupId>
@@ -66,6 +66,11 @@
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.6.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>auth</artifactId>
+            <version>2.15.66</version>
         </dependency>
     </dependencies>
 
