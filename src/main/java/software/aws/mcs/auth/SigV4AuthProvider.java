@@ -156,10 +156,9 @@ public class SigV4AuthProvider implements AuthProvider {
         if (region == null) {
             DefaultAwsRegionProviderChain chain = new DefaultAwsRegionProviderChain();
             Region defaultRegion = chain.getRegion();
-            this.signingRegion = defaultRegion.toString();
-
+            this.signingRegion = defaultRegion.toString().toLowerCase();
         } else {
-            this.signingRegion = region;
+            this.signingRegion = region.toLowerCase();
         }
 
         if (this.signingRegion == null) {
