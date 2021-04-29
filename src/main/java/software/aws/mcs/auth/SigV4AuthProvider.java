@@ -111,22 +111,26 @@ public class SigV4AuthProvider implements AuthProvider {
     public SigV4AuthProvider(@NotNull AWSCredentialsProvider credentialsProvider, final String region) {
         this.credentialsProvider = credentialsProvider;
 
+        String rawSigningRegion;
+
         if (region == null) {
             if (System.getProperty(SDKGlobalConfiguration.AWS_REGION_SYSTEM_PROPERTY) != null) {
-                this.signingRegion = System.getProperty(SDKGlobalConfiguration.AWS_REGION_SYSTEM_PROPERTY);
+                rawSigningRegion = System.getProperty(SDKGlobalConfiguration.AWS_REGION_SYSTEM_PROPERTY);
             } else {
-                this.signingRegion = System.getenv(SDKGlobalConfiguration.AWS_REGION_ENV_VAR);
+                rawSigningRegion = System.getenv(SDKGlobalConfiguration.AWS_REGION_ENV_VAR);
             }
         } else {
-            this.signingRegion = region;
+            rawSigningRegion = region;
         }
 
-        if (this.signingRegion == null) {
+        if (rawSigningRegion == null) {
             throw new IllegalStateException(
                 "A region must be specified by constructor, AWS_REGION env variable, or aws.region system property"
             );
         }
 
+        // Ensure that the region is lower case for signing purposes
+        this.signingRegion = rawSigningRegion.toLowerCase();
     }
 
     @Override
