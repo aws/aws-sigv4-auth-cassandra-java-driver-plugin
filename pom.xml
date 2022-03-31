@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>software.aws.mcs</groupId>
     <artifactId>aws-sigv4-auth-cassandra-java-driver-plugin</artifactId>
-    <version>4.0.3</version>
+    <version>4.0.5</version>
     <name>AWS SigV4 Auth Java Driver 4.x Plugin</name>
     <description>A Plugin to allow SigV4 authentication for Java Cassandra drivers with Amazon MCS</description>
     <url>https://github.com/aws/aws-sigv4-auth-cassandra-java-driver-plugin</url>
@@ -46,19 +46,35 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-core</artifactId>
-            <version>1.11.717</version>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>com.datastax.oss</groupId>
             <artifactId>java-driver-core</artifactId>
-            <version>4.4.0</version>
+            <version>4.13.0</version>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
             <version>2.0.0.Final</version>
+        </dependency>
+	<!-- Override from underlying datastax dependency -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.13.0</version>
         </dependency>
         <!-- Test Dependencies -->
         <dependency>
@@ -66,6 +82,11 @@
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.6.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>auth</artifactId>
+            <version>2.15.66</version>
         </dependency>
     </dependencies>
 
@@ -135,25 +156,6 @@
                     <nexusUrl>https://aws.oss.sonatype.org</nexusUrl>
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <version>2.0.0</version>
-                <configuration>
-                    <copyrightOwners>Amazon.com, Inc. or its affiliates. All Rights Reserved.</copyrightOwners>
-                    <licenseName>apache_v2</licenseName>
-                    <roots>src</roots>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>first</id>
-                        <goals>
-                            <goal>update-file-header</goal>
-                        </goals>
-                        <phase>process-sources</phase>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -4,7 +4,7 @@ package software.aws.mcs.auth;
  * #%L
  * AWS SigV4 Auth Java Driver 4.x Plugin
  * %%
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright (C) 2020-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,32 +20,13 @@ package software.aws.mcs.auth;
  * #L%
  */
 
-import com.amazonaws.SDKGlobalConfiguration;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSSessionCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.auth.internal.AWS4SignerUtils;
-import com.amazonaws.auth.internal.SignerConstants;
-
-import com.datastax.oss.driver.api.core.auth.AuthenticationException;
-import com.datastax.oss.driver.api.core.auth.Authenticator;
-import com.datastax.oss.driver.api.core.auth.AuthProvider;
-import com.datastax.oss.driver.api.core.config.DriverOption;
-import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.metadata.EndPoint;
-
-import org.apache.commons.codec.binary.Hex;
-
 import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.Arrays;
@@ -53,10 +34,27 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.validation.constraints.NotNull;
+
+import org.apache.commons.codec.binary.Hex;
+
+import com.datastax.oss.driver.api.core.auth.AuthProvider;
+import com.datastax.oss.driver.api.core.auth.AuthenticationException;
+import com.datastax.oss.driver.api.core.auth.Authenticator;
+import com.datastax.oss.driver.api.core.config.DriverOption;
+import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.signer.internal.Aws4SignerUtils;
+import software.amazon.awssdk.auth.signer.internal.SignerConstant;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
+
+import static software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create;
 
 /**
  * This auth provider can be used with the Amazon MCS service to
@@ -89,7 +87,7 @@ public class SigV4AuthProvider implements AuthProvider {
     // These are static values because we don't need HTTP, but SigV4 assumes some amount of HTTP metadata
     private static final String CANONICAL_SERVICE = "cassandra";
 
-    private final AWSCredentialsProvider credentialsProvider;
+    private final AwsCredentialsProvider credentialsProvider;
     private final String signingRegion;
 
     /**
@@ -99,7 +97,7 @@ public class SigV4AuthProvider implements AuthProvider {
      * environment variable or the "aws.region" system property.
      */
     public SigV4AuthProvider() {
-        this(DefaultAWSCredentialsProviderChain.getInstance(), null);
+        this(create(), null);
     }
 
     private final static DriverOption REGION_OPTION = new DriverOption() {
@@ -126,7 +124,7 @@ public class SigV4AuthProvider implements AuthProvider {
      * preference.
      *
      * For programmatic construction, use {@link #SigV4AuthProvider()}
-     * or {@link #SigV4AuthProvider(AWSCredentialsProvider, String)}.
+     * or {@link #SigV4AuthProvider(AwsCredentialsProvider, String)}.
      *
      * @param driverContext the driver context for instance creation.
      * Unused for this plugin.
@@ -143,7 +141,7 @@ public class SigV4AuthProvider implements AuthProvider {
      * variable, or the "aws.region" system property to configure it.
      */
     public SigV4AuthProvider(final String region) {
-        this(DefaultAWSCredentialsProviderChain.getInstance(), region);
+        this(create(), region);
     }
 
     /**
@@ -153,17 +151,15 @@ public class SigV4AuthProvider implements AuthProvider {
      * null value indicates to use the AWS_REGION environment
      * variable, or the "aws.region" system property to configure it.
      */
-    public SigV4AuthProvider(@NotNull AWSCredentialsProvider credentialsProvider, final String region) {
+    public SigV4AuthProvider(@NotNull AwsCredentialsProvider credentialsProvider, final String region) {
         this.credentialsProvider = credentialsProvider;
 
         if (region == null) {
-            if (System.getProperty(SDKGlobalConfiguration.AWS_REGION_SYSTEM_PROPERTY) != null) {
-                this.signingRegion = System.getProperty(SDKGlobalConfiguration.AWS_REGION_SYSTEM_PROPERTY);
-            } else {
-                this.signingRegion = System.getenv(SDKGlobalConfiguration.AWS_REGION_ENV_VAR);
-            }
+            DefaultAwsRegionProviderChain chain = new DefaultAwsRegionProviderChain();
+            Region defaultRegion = chain.getRegion();
+            this.signingRegion = defaultRegion.toString().toLowerCase();
         } else {
-            this.signingRegion = region;
+            this.signingRegion = region.toLowerCase();
         }
 
         if (this.signingRegion == null) {
@@ -171,7 +167,6 @@ public class SigV4AuthProvider implements AuthProvider {
                 "A region must be specified by constructor, AWS_REGION env variable, or aws.region system property"
             );
         }
-
     }
 
     @Override
@@ -205,19 +200,18 @@ public class SigV4AuthProvider implements AuthProvider {
                 byte[] nonce = extractNonce(challenge);
 
                 Instant requestTimestamp = Instant.now();
-
-                AWSCredentials credentials = credentialsProvider.getCredentials();
+                AwsCredentials credentials = credentialsProvider.resolveCredentials();
 
                 String signature = generateSignature(nonce, requestTimestamp, credentials);
 
                 String response =
                     String.format("signature=%s,access_key=%s,amzdate=%s",
                                   signature,
-                                  credentials.getAWSAccessKeyId(),
+                                  credentials.accessKeyId(),
                                   timestampFormatter.format(requestTimestamp));
 
-                if (credentials instanceof AWSSessionCredentials) {
-                    response = response + ",session_token=" + ((AWSSessionCredentials)credentials).getSessionToken();
+                if (credentials instanceof AwsSessionCredentials) {
+                    response = response + ",session_token=" + ((AwsSessionCredentials)credentials).sessionToken();
                 }
 
                 return CompletableFuture.completedFuture(ByteBuffer.wrap(response.getBytes(StandardCharsets.UTF_8)));
@@ -267,22 +261,22 @@ public class SigV4AuthProvider implements AuthProvider {
         return Arrays.copyOfRange(challenge, nonceStart, nonceEnd);
     }
 
-    private String generateSignature(byte[] nonce, Instant requestTimestamp, AWSCredentials credentials) throws UnsupportedEncodingException {
-        String credentialScopeDate = AWS4SignerUtils.formatDateStamp(requestTimestamp.toEpochMilli());
+    private String generateSignature(byte[] nonce, Instant requestTimestamp, AwsCredentials credentials) throws UnsupportedEncodingException {
+        String credentialScopeDate = Aws4SignerUtils.formatDateStamp(requestTimestamp.toEpochMilli());
 
         String signingScope = String.format("%s/%s/%s/aws4_request", credentialScopeDate, signingRegion, CANONICAL_SERVICE);
 
         String nonceHash = sha256Digest(nonce);
 
-        String canonicalRequest = canonicalizeRequest(credentials.getAWSAccessKeyId(), signingScope, requestTimestamp, nonceHash);
+        String canonicalRequest = canonicalizeRequest(credentials.accessKeyId(), signingScope, requestTimestamp, nonceHash);
 
         String stringToSign = String.format("%s\n%s\n%s\n%s",
-                                            SignerConstants.AWS4_SIGNING_ALGORITHM,
+                                            SignerConstant.AWS4_SIGNING_ALGORITHM,
                                             timestampFormatter.format(requestTimestamp),
                                             signingScope,
                                             sha256Digest(canonicalRequest));
 
-        byte[] signingKey = getSignatureKey(credentials.getAWSSecretKey(),
+        byte[] signingKey = getSignatureKey(credentials.secretAccessKey(),
                                             credentialScopeDate,
                                             signingRegion,
                                             CANONICAL_SERVICE);
@@ -292,7 +286,7 @@ public class SigV4AuthProvider implements AuthProvider {
         return Hex.encodeHexString(signature, true);
     }
 
-    private static final String AMZ_ALGO_HEADER = "X-Amz-Algorithm=" + SignerConstants.AWS4_SIGNING_ALGORITHM;
+    private static final String AMZ_ALGO_HEADER = "X-Amz-Algorithm=" + SignerConstant.AWS4_SIGNING_ALGORITHM;
     private static final String AMZ_EXPIRES_HEADER = "X-Amz-Expires=900";
 
     private static String canonicalizeRequest(String accessKey,

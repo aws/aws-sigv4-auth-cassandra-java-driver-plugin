@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [4.0.4] - 2021-01-20
+
+Updated to AWS 2 SDK.
+  
+
 ## [4.0.3] - 2020-05-15
 
 Updated the plugin to fix newlines used in the SigV4 signature on Windows. This resolves [Issue
