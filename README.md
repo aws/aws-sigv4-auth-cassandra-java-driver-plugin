@@ -66,7 +66,7 @@ The authentication plugin supports version 4.x of the DataStax Java Driver for C
 <dependency>
     <groupId>software.aws.mcs</groupId>
     <artifactId>aws-sigv4-auth-cassandra-java-driver-plugin</artifactId>
-    <version>4.0.4</version>
+    <version>4.0.6</version>
 </dependency>
 ```
 
