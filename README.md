@@ -60,7 +60,11 @@ Set the Region explicitly in your `advanced.auth-provider.class` configuration (
 
 ## Add the Authentication Plugin to the Application
 
-The authentication plugin supports version 4.x of the DataStax Java Driver for Cassandra. If you’re using Apache Maven, or a build system that can use Maven dependencies, add the following dependencies to your `pom.xml` file.
+The authentication plugin supports version 4.x of the DataStax Java Driver for Cassandra.
+
+### With Maven/Ivy
+
+If you’re using Apache Maven, or a build system that can use Maven dependencies, add the following dependencies to your `pom.xml` file.
 
 ``` xml
 <dependency>
@@ -69,6 +73,12 @@ The authentication plugin supports version 4.x of the DataStax Java Driver for C
     <version>4.0.6</version>
 </dependency>
 ```
+
+### Download the Shaded JAR
+
+If you just need the JAR to use with a third party tool, please use the shaded JAR (includes the SDK and other
+dependencies) located in the [releases](https://github.com/aws/aws-sigv4-auth-cassandra-java-driver-plugin/releases)
+section on GitHub.
 
 ## How to use the Authentication Plugin
 
