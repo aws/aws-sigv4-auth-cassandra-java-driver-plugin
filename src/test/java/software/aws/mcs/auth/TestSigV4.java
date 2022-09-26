@@ -20,11 +20,6 @@ package software.aws.mcs.auth;
  * #L%
  */
 
-import com.amazonaws.SDKGlobalConfiguration;
-import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.*;
-
-import software.aws.mcs.auth.SigV4AuthProvider;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import javax.net.ssl.SSLContext;
@@ -55,28 +50,16 @@ public class TestSigV4 {
 
         System.out.println("Using endpoints: " + contactPoints);
 
-        String region = null;
-        if (System.getProperty(SDKGlobalConfiguration.AWS_REGION_SYSTEM_PROPERTY) != null) {
-            region = System.getProperty(SDKGlobalConfiguration.AWS_REGION_SYSTEM_PROPERTY);
-        } else {
-            region = System.getenv(SDKGlobalConfiguration.AWS_REGION_ENV_VAR);
-        }
-        if (region == null) {
-            throw new IllegalStateException(
-                    "When specifying contact points you must specify a localdc. In this sample we use the AWS_REGION env variable, or aws.region system property value as localdc"
-            );
-        }
-
         // The CqlSession object is the main entry point of the driver.
         // It holds the known state of the actual Cassandra cluster (notably the Metadata).
         // This class is thread-safe, you should create a single instance (per target Cassandra cluster), and share
         // it throughout your application.
         try (CqlSession session = CqlSession.builder()
-             .addContactPoints(contactPoints)
-             .withAuthProvider(new SigV4AuthProvider())
-             .withSslContext(SSLContext.getDefault())
-             .withLocalDatacenter(region)
-             .build()) {
+                .addContactPoints(contactPoints)
+                .withAuthProvider(new SigV4AuthProvider())
+                .withSslContext(SSLContext.getDefault())
+                .withLocalDatacenter("us-west-2")
+                .build()) {
 
             // We use execute to send a query to Cassandra. This returns a ResultSet, which is essentially a collection
             // of Row objects.

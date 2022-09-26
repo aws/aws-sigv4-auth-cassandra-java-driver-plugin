@@ -130,8 +130,7 @@ public class SigV4AuthProvider implements AuthProvider {
      * Unused for this plugin.
      */
     public SigV4AuthProvider(DriverContext driverContext) {
-        this(DefaultAWSCredentialsProviderChain.getInstance(),
-                (driverContext.getConfig().getDefaultProfile().getString(REGION_OPTION, null)));
+        this(driverContext.getConfig().getDefaultProfile().getString(REGION_OPTION, null));
     }
 
     /**

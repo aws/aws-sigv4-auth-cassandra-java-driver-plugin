@@ -4,7 +4,7 @@ package software.aws.mcs.auth;
  * #%L
  * AWS SigV4 Auth Java Driver 4.x Plugin
  * %%
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright (C) 2020-2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,15 @@ package software.aws.mcs.auth;
  * #L%
  */
 
-import com.amazonaws.SDKGlobalConfiguration;
+import java.io.File;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.util.ArrayList;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
-
-import javax.net.ssl.SSLContext;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.net.URL;
-import java.util.ArrayList;
 
 public class TestSigV4Config {
     static String[] DEFAULT_CONTACT_POINTS = {"127.0.0.1:9042"};
@@ -56,18 +52,6 @@ public class TestSigV4Config {
 
         System.out.println("Using endpoints: " + contactPoints);
 
-        String region = null;
-        if (System.getProperty(SDKGlobalConfiguration.AWS_REGION_SYSTEM_PROPERTY) != null) {
-            region = System.getProperty(SDKGlobalConfiguration.AWS_REGION_SYSTEM_PROPERTY);
-        } else {
-            region = System.getenv(SDKGlobalConfiguration.AWS_REGION_ENV_VAR);
-        }
-        if (region == null) {
-            throw new IllegalStateException(
-                    "When specifying contact points you must specify a localdc. In this sample we use the AWS_REGION env variable, or aws.region system property value as localdc"
-            );
-        }
-
         //By default the reference.conf is loaded by the driver which contains all defaults.
         //You can override this by providing reference.conf on the classpath
         //to isolate test you can load conf with a custom name
@@ -81,7 +65,7 @@ public class TestSigV4Config {
         try (CqlSession session = CqlSession.builder()
                 .withConfigLoader(DriverConfigLoader.fromFile(file))
                 .addContactPoints(contactPoints)
-                .withLocalDatacenter(region)
+                .withLocalDatacenter("us-west-2")
              .build()) {
 
             // We use execute to send a query to Cassandra. This returns a ResultSet, which is essentially a collection
