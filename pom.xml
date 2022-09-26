@@ -228,7 +228,10 @@
                         <!-- Generally, consumers of the shaded JAR
                              will already have the driver if they want
                              the plugin -->
-                        <excludes>com.datastax.oss</excludes>
+                        <excludes>
+                            <exclude>com.datastax.oss</exclude>
+                            <exclude>com.fasterxml.jackson.core</exclude>
+                        </excludes>
                     </artifactSet>
                 </configuration>
                 <executions>
