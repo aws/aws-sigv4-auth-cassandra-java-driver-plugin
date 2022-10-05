@@ -1,9 +1,24 @@
 # CHANGELOG
 
+## [4.0.7] - 2022-10-05
+
+Updated Jackson version to 2.13.4 to address CVE-2022-42004. This is a transitive dependency of the driver and the SigV4
+plugin does not use Jackson directly.
+
+## [4.0.6] - 2022-04-21
+
+Updated Jackson version to 2.13.2
+
+## [4.0.5] - 2022-02-01
+
+* Fixed a bug with region case sensitivity to match the SigV4 spec
+* Updated the driver dependency to 4.13.0, including overriding transitive Jackson dependencies to ensure currency
+* Removed the Maven license plugin in favor of manual management
+
 ## [4.0.4] - 2021-01-20
 
 Updated to AWS 2 SDK.
-  
+
 
 ## [4.0.3] - 2020-05-15
 
