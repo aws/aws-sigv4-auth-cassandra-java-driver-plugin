@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [4.0.8] - 2022-12-06
+
+Updated Jackson-databind version to 2.13.4.1.
+
 ## [4.0.7] - 2022-10-05
 
 Updated Jackson version to 2.13.4 to address CVE-2022-42004. This is a transitive dependency of the driver and the SigV4
