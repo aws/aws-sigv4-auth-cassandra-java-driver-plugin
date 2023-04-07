@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [4.0.9] - 2023-04-07
+
+Updated Jackson-databind version to 2.13.4.2 to address CVE-2022-42003.
+
 ## [4.0.8] - 2022-12-06
 
 Updated Jackson-databind version to 2.13.4.1.
