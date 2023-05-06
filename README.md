@@ -119,7 +119,7 @@ To use the configuration file, set the `advanced.auth-provider.class` to `softwa
 1. Set the `advanced.auth-provider.class` to `software.aws.mcs.auth.SigV4AuthProvider`.
 1. Set `basic.load-balancing-policy.local-datacenter` to the region name. In this case, use `us-east-2`.
 
-The following is an example of this.
+The following is an example of this config without explicit role to be assumed. 
 
 ``` text
     datastax-java-driver {
@@ -131,6 +131,27 @@ The following is an example of this.
             auth-provider = {
                 class = software.aws.mcs.auth.SigV4AuthProvider
                 aws-region = us-east-2
+            }
+            ssl-engine-factory {
+                class = DefaultSslEngineFactory
+            }
+        }
+    }
+```
+
+Dollowing is an example of this config with explicit role to be assumed.
+
+``` text
+    datastax-java-driver {
+        basic.load-balancing-policy {
+            class = DefaultLoadBalancingPolicy
+            local-datacenter = us-east-2
+        }
+        advanced {
+            auth-provider = {
+                class = software.aws.mcs.auth.SigV4AuthProvider
+                aws-region = us-east-2
+                aws-role = "arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME"
             }
             ssl-engine-factory {
                 class = DefaultSslEngineFactory

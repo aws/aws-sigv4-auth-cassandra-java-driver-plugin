@@ -55,7 +55,7 @@ public class TestSigV4Config {
         //By default the reference.conf is loaded by the driver which contains all defaults.
         //You can override this by providing reference.conf on the classpath
         //to isolate test you can load conf with a custom name
-        URL url = TestSigV4Config.class.getClassLoader().getResource("keyspaces-reference.conf");
+        URL url = TestSigV4Config.class.getClassLoader().getResource("keyspaces-reference-norole.conf");
 
         File file = new File(url.toURI());
         // The CqlSession object is the main entry point of the driver.
@@ -64,18 +64,16 @@ public class TestSigV4Config {
         // it throughout your application.
         try (CqlSession session = CqlSession.builder()
                 .withConfigLoader(DriverConfigLoader.fromFile(file))
-                .addContactPoints(contactPoints)
-                .withLocalDatacenter("us-west-2")
              .build()) {
 
             // We use execute to send a query to Cassandra. This returns a ResultSet, which is essentially a collection
             // of Row objects.
-            ResultSet rs = session.execute("select release_version from system.local");
+            ResultSet rs = session.execute("select * from testkeyspace.testconf");
             //  Extract the first row (which is the only one in this case).
             Row row = rs.one();
 
             // Extract the value of the first (and only) column from the row.
-            String releaseVersion = row.getString("release_version");
+            String releaseVersion = row.getString("category");
             System.out.printf("Cassandra version is: %s%n", releaseVersion);
         }
     }
