@@ -105,11 +105,7 @@ public class SigV4AuthProvider implements AuthProvider {
         this(create(), null);
     }
 
-    private final static DriverOption REGION_OPTION = new DriverOption() {
-            public String getPath() {
-                return "advanced.auth-provider.aws-region";
-            }
-        };
+    private final static DriverOption REGION_OPTION = () -> "advanced.auth-provider.aws-region";
 
     private final static DriverOption ROLE_OPTION = () -> "advanced.auth-provider.aws-role";
 
@@ -397,13 +393,12 @@ public class SigV4AuthProvider implements AuthProvider {
     /**
      * Creates a STS role credential provider
      * @param roleArn The ARN of the role to assume
-     * @param sessionName The name of the session
      * @param stsRegion The region of the STS endpoint
      * @return The STS role credential provider
      */
     private static StsAssumeRoleCredentialsProvider createSTSRoleCredentialProvider(String roleArn,
                                                                      String stsRegion) {
-        final String roleName= StringUtils.substringAfterLast(roleArn,":");
+        final String roleName= StringUtils.substringAfterLast(roleArn,"/");
         final String sessionName="keyspaces-session-"+roleName+System.currentTimeMillis();
         StsClient stsClient = StsClient.builder()
                 .region(Region.of(stsRegion))
@@ -420,7 +415,7 @@ public class SigV4AuthProvider implements AuthProvider {
 
     /**
      * Gets the default region for SigV4 if region is not provided.
-     * @return
+     * @return Default region
      */
     private static String getDefaultRegion() {
         DefaultAwsRegionProviderChain chain = new DefaultAwsRegionProviderChain();
