@@ -47,6 +47,7 @@ import com.datastax.oss.driver.api.core.auth.Authenticator;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import org.apache.commons.lang3.StringUtils;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
@@ -55,9 +56,7 @@ import software.amazon.awssdk.auth.signer.internal.SignerConstant;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.services.sts.StsClient;
-import software.amazon.awssdk.services.sts.StsClientBuilder;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
-import software.amazon.awssdk.services.sts.auth.StsGetSessionTokenCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 
 import static software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create;
@@ -112,11 +111,7 @@ public class SigV4AuthProvider implements AuthProvider {
             }
         };
 
-    private final static DriverOption ROLE_OPTION = new DriverOption() {
-        public String getPath() {
-            return "advanced.auth-provider.aws-role";
-        }
-    };
+    private final static DriverOption ROLE_OPTION = () -> "advanced.auth-provider.aws-role";
 
     /**
      * This constructor is provided so that the driver can create
@@ -152,8 +147,19 @@ public class SigV4AuthProvider implements AuthProvider {
      * null value indicates to use the AWS_REGION environment
      * variable, or the "aws.region" system property to configure it.
      */
+    public SigV4AuthProvider(final String region) {
+        this(create(), region);
+    }
+
+    /**
+     * Create a new Provider, using the specified region and IAM role to assume.
+     * @param region the region (e.g. us-east-1) to use for signing. A
+     * null value indicates to use the AWS_REGION environment
+     * variable, or the "aws.region" system property to configure it.
+     * @param roleArn The IAM Role ARN which the connecting client should assume before connecting with Amazon Keyspaces.
+     */
     public SigV4AuthProvider(final String region,final String roleArn) {
-        this(Optional.ofNullable(roleArn).map(r->(AwsCredentialsProvider)createSTSRoleCredentialProvider(r,"keyspaces-session",region)).orElse(create()), region);
+        this(Optional.ofNullable(roleArn).map(r->(AwsCredentialsProvider)createSTSRoleCredentialProvider(r,region)).orElse(create()), region);
     }
 
     /**
@@ -393,10 +399,12 @@ public class SigV4AuthProvider implements AuthProvider {
      * @param roleArn The ARN of the role to assume
      * @param sessionName The name of the session
      * @param stsRegion The region of the STS endpoint
-     * @return
+     * @return The STS role credential provider
      */
     private static StsAssumeRoleCredentialsProvider createSTSRoleCredentialProvider(String roleArn,
-                                                                     String sessionName, String stsRegion) {
+                                                                     String stsRegion) {
+        final String roleName= StringUtils.substringAfterLast(roleArn,":");
+        final String sessionName="keyspaces-session-"+roleName+System.currentTimeMillis();
         StsClient stsClient = StsClient.builder()
                 .region(Region.of(stsRegion))
                 .build();
