@@ -20,42 +20,35 @@ package software.aws.mcs.auth;
  * #L%
  */
 
-import java.io.File;
-import java.net.InetSocketAddress;
-import java.net.URL;
-import java.util.ArrayList;
-
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
+import org.junit.platform.commons.util.StringUtils;
 
-public class TestSigV4Config {
-    static String[] DEFAULT_CONTACT_POINTS = {"127.0.0.1:9042"};
+import java.io.File;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Optional;
 
+public class TestSigV4AssumeRoleConfig {
+    static String KEYSPACES_DEFAULT_CONF="keyspaces-reference-norole.conf";
+    /**
+     * Before executing this test, ensure that KeySpaces tables are created.
+     * Refer ddl.cql and dml.cql to create and populate tables.
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
-        String[] contactPointsRaw = DEFAULT_CONTACT_POINTS;
-
-        if (args.length == 1) {
-            contactPointsRaw = args[0].split(",");
-        } else if (args.length > 1) {
-            System.out.println("Usage: TestSigV4 [<contact points, comma separated, 'IP:port' format>]");
-            System.exit(-1);
+        String keySpacesConf=KEYSPACES_DEFAULT_CONF;
+        if(args.length>1){
+            keySpacesConf=args[0];
+            System.out.println("Using key spaces config file: "+keySpacesConf);
+            keySpacesConf=Optional.of(keySpacesConf).filter(StringUtils::isBlank).orElse(KEYSPACES_DEFAULT_CONF);
         }
 
-        ArrayList<InetSocketAddress> contactPoints = new ArrayList<>(contactPointsRaw.length);
-
-        for (int i = 0; i < contactPointsRaw.length; i++) {
-            String[] parts = contactPointsRaw[i].split(":");
-            contactPoints.add(InetSocketAddress.createUnresolved(parts[0], Integer.parseInt(parts[1])));
-        }
-
-        System.out.println("Using endpoints: " + contactPoints);
-
-        //By default the reference.conf is loaded by the driver which contains all defaults.
-        //You can override this by providing reference.conf on the classpath
-        //to isolate test you can load conf with a custom name
-        URL url = TestSigV4Config.class.getClassLoader().getResource("keyspaces-reference.conf");
+        URL url = TestSigV4AssumeRoleConfig.class.getClassLoader().getResource(keySpacesConf);
 
         File file = new File(url.toURI());
         // The CqlSession object is the main entry point of the driver.
@@ -64,18 +57,16 @@ public class TestSigV4Config {
         // it throughout your application.
         try (CqlSession session = CqlSession.builder()
                 .withConfigLoader(DriverConfigLoader.fromFile(file))
-                .addContactPoints(contactPoints)
-                .withLocalDatacenter("us-west-2")
-                .build()) {
+             .build()) {
 
             // We use execute to send a query to Cassandra. This returns a ResultSet, which is essentially a collection
             // of Row objects.
-            ResultSet rs = session.execute("select release_version from system.local");
+            ResultSet rs = session.execute("select * from testkeyspace.testconf");
             //  Extract the first row (which is the only one in this case).
             Row row = rs.one();
 
             // Extract the value of the first (and only) column from the row.
-            String releaseVersion = row.getString("release_version");
+            String releaseVersion = row.getString("category");
             System.out.printf("Cassandra version is: %s%n", releaseVersion);
         }
     }

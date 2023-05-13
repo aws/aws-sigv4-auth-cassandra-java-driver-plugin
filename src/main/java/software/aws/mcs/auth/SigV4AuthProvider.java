@@ -47,7 +47,6 @@ import com.datastax.oss.driver.api.core.auth.Authenticator;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import org.apache.commons.lang3.StringUtils;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
@@ -169,9 +168,7 @@ public class SigV4AuthProvider implements AuthProvider {
         this.credentialsProvider = credentialsProvider;
 
         if (region == null) {
-            DefaultAwsRegionProviderChain chain = new DefaultAwsRegionProviderChain();
-            Region defaultRegion = chain.getRegion();
-            this.signingRegion = defaultRegion.toString().toLowerCase();
+            this.signingRegion = getDefaultRegion();
         } else {
             this.signingRegion = region.toLowerCase();
         }
@@ -398,7 +395,12 @@ public class SigV4AuthProvider implements AuthProvider {
      */
     private static StsAssumeRoleCredentialsProvider createSTSRoleCredentialProvider(String roleArn,
                                                                      String stsRegion) {
-        final String roleName= StringUtils.substringAfterLast(roleArn,"/");
+        //Get role name from ARN
+        String[] arnParts = roleArn.split("/");
+        if(arnParts.length < 2){
+            throw new IllegalArgumentException("Invalid role ARN");
+        }
+        String roleName = arnParts[arnParts.length - 1];
         final String sessionName="keyspaces-session-"+roleName+System.currentTimeMillis();
         StsClient stsClient = StsClient.builder()
                 .region(Region.of(stsRegion))
@@ -419,6 +421,6 @@ public class SigV4AuthProvider implements AuthProvider {
      */
     private static String getDefaultRegion() {
         DefaultAwsRegionProviderChain chain = new DefaultAwsRegionProviderChain();
-        return Optional.ofNullable(chain.getRegion()).orElse(Region.US_EAST_1).toString();
+        return chain.getRegion().toString().toLowerCase();
     }
 }

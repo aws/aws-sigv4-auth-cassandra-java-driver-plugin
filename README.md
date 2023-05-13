@@ -8,7 +8,7 @@ This package implements an authentication plugin for the open-source Datastax Ja
 
 The plugin depends on the AWS SDK for Java. It uses `AWSCredentialsProvider` to obtain credentials. Because the IAuthenticator interface operates at the level of `InetSocketAddress`, you must specify the service endpoint to use for the connection.
 You can provide the Region in the constructor programmatically, via the `AWS_REGION` environment variable, or via the `aws.region` system property.
-You can also provide the IAM role, with which you want to connect with KeySpaces, in the constructor programmatically, via advanced.auth-provider.aws-role property in the conf file.
+You can also provide an IAM role to assume for access to KeySpaces, programmatically or via the configuration file.
 
 The full documentation for the plugin is available at
 https://docs.aws.amazon.com/keyspaces/latest/devguide/programmatic.credentials.html#programmatic.credentials.SigV4_KEYSPACES.
@@ -57,22 +57,19 @@ One of the constructors for `software.aws.mcs.auth.SigV4AuthProvider` takes a `S
 
 ### Configuration
 
-Set the Region explicitly in your `advanced.auth-provider.class` configuration (see example below), by specifying the `advanced.auth-provider.aws-region` property.
+Set the Region explicitly in your `advanced.auth-provider` configuration (see example below), by specifying the `advanced.auth-provider.aws-region` property.
 
 ## Assume IAM Role Configuration
 
-You must configure the AWS Region that the plugin will use when authenticating using mechanism mentioned above. 
-You can also specify IAM Role (including cross-account IAM role) configuraiton using one of the 2 methods: 
-* Constructor
-* Configuration
+You can specify an IAM role to assume for access to KeySpaces using either the constructor or the driver configuration file
 
 ### Constructor
 
-One of the constructors for `software.aws.mcs.auth.SigV4AuthProvider` takes two String , first represening the region and second one representing IAM role ARN. 
+One of the constructors for `software.aws.mcs.auth.SigV4AuthProvider` takes two Strings , the first representing the region and the second representing the ARN of the IAM role to assume. 
 
 ### Configuration
 
-Set the IAM Role explicitly in your `advanced.auth-provider.class` configuration (see example below), by specifying the `advanced.auth-provider.aws-role` property.
+Set the IAM Role explicitly in your `advanced.auth-provider` configuration (see example below), by specifying the `advanced.auth-provider.aws-role` property.
 
 ## Add the Authentication Plugin to the Application
 
@@ -155,7 +152,7 @@ The following is an example of this config without explicit role to be assumed.
     }
 ```
 
-Dollowing is an example of this config with explicit role to be assumed.
+The following is an example of this config with an explicit role to be assumed.
 
 ``` text
     datastax-java-driver {
