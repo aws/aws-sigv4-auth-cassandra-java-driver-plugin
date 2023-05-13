@@ -69,7 +69,7 @@ One of the constructors for `software.aws.mcs.auth.SigV4AuthProvider` takes two 
 
 ### Configuration
 
-Set the IAM Role explicitly in your `advanced.auth-provider` configuration (see example below), by specifying the `advanced.auth-provider.aws-role` property.
+Set the IAM Role explicitly in your `advanced.auth-provider` configuration (see example below), by specifying the `advanced.auth-provider.aws-role-arn` property.
 
 ## Add the Authentication Plugin to the Application
 
@@ -164,7 +164,7 @@ The following is an example of this config with an explicit role to be assumed.
             auth-provider = {
                 class = software.aws.mcs.auth.SigV4AuthProvider
                 aws-region = us-east-2
-                aws-role = "arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME"
+                aws-role-arn = "arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME"
             }
             ssl-engine-factory {
                 class = DefaultSslEngineFactory

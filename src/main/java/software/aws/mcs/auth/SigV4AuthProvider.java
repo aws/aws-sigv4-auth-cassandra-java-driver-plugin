@@ -106,7 +106,7 @@ public class SigV4AuthProvider implements AuthProvider {
 
     private final static DriverOption REGION_OPTION = () -> "advanced.auth-provider.aws-region";
 
-    private final static DriverOption ROLE_OPTION = () -> "advanced.auth-provider.aws-role";
+    private final static DriverOption ROLE_OPTION = () -> "advanced.auth-provider.aws-role-arn";
 
     /**
      * This constructor is provided so that the driver can create
