@@ -87,4 +87,21 @@ public class SigV4AuthProviderTest {
         assertEquals(-1, SigV4AuthProvider.indexOf(target, pattern));
     }
 
+
+    @Test
+    public void testGetRoleNameFromArn() {
+        String arn = "arn:aws:iam::ACCOUNT_ID:role/keyspaces-act2-role";
+        assertEquals("keyspaces-act2-role", SigV4AuthProvider.getRoleNameFromArn(arn));
+    }
+
+    @Test
+    public void testGetRoleNameFromArnFailure() {
+        assertThrows(IllegalArgumentException.class, () -> SigV4AuthProvider.getRoleNameFromArn(""));
+        assertThrows(IllegalArgumentException.class, () -> SigV4AuthProvider.getRoleNameFromArn("roleName"));
+        assertThrows(IllegalArgumentException.class, () -> SigV4AuthProvider.getRoleNameFromArn("illegalerolearn:rolename"));
+    }
+
+
+
+
 }

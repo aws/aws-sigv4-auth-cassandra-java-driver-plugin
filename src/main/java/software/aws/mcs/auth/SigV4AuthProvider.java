@@ -133,7 +133,7 @@ public class SigV4AuthProvider implements AuthProvider {
      */
     public SigV4AuthProvider(DriverContext driverContext) {
         this(driverContext.getConfig().getDefaultProfile().getString(REGION_OPTION, getDefaultRegion()),
-                driverContext.getConfig().getDefaultProfile().getString(ROLE_OPTION, null));
+             driverContext.getConfig().getDefaultProfile().getString(ROLE_OPTION, null));
     }
 
     /**
@@ -393,14 +393,10 @@ public class SigV4AuthProvider implements AuthProvider {
      * @param stsRegion The region of the STS endpoint
      * @return The STS role credential provider
      */
-    private static StsAssumeRoleCredentialsProvider createSTSRoleCredentialProvider(String roleArn,
-                                                                     String stsRegion) {
+    private static StsAssumeRoleCredentialsProvider createSTSRoleCredentialProvider(@NotNull String roleArn,
+                                                                            @NotNull String stsRegion) {
         //Get role name from ARN
-        String[] arnParts = roleArn.split("/");
-        if(arnParts.length < 2){
-            throw new IllegalArgumentException("Invalid role ARN");
-        }
-        String roleName = arnParts[arnParts.length - 1];
+        String roleName = getRoleNameFromArn(roleArn);
         final String sessionName="keyspaces-session-"+roleName+System.currentTimeMillis();
         StsClient stsClient = StsClient.builder()
                 .region(Region.of(stsRegion))
@@ -413,6 +409,20 @@ public class SigV4AuthProvider implements AuthProvider {
                 .stsClient(stsClient)
                 .refreshRequest(assumeRoleRequest)
                 .build();
+    }
+
+    /**
+     * Extracts the role name from the ARN.
+     * @param roleArn The ARN of the role to assume
+     * @return
+     */
+    static String getRoleNameFromArn(@NotNull String roleArn) {
+        String[] arnParts = roleArn.split("/");
+        if(arnParts.length < 2){
+            throw new IllegalArgumentException("Invalid role ARN");
+        }
+        String roleName = arnParts[arnParts.length - 1];
+        return roleName;
     }
 
     /**
