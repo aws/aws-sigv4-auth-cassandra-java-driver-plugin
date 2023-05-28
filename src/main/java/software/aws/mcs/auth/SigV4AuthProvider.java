@@ -395,9 +395,7 @@ public class SigV4AuthProvider implements AuthProvider {
      */
     private static StsAssumeRoleCredentialsProvider createSTSRoleCredentialProvider(@NotNull String roleArn,
                                                                             @NotNull String stsRegion) {
-        //Get role name from ARN
-        String roleName = getRoleNameFromArn(roleArn);
-        final String sessionName="keyspaces-session-"+roleName+System.currentTimeMillis();
+        final String sessionName="keyspaces-session-"+System.currentTimeMillis();
         StsClient stsClient = StsClient.builder()
                 .region(Region.of(stsRegion))
                 .build();
@@ -409,20 +407,6 @@ public class SigV4AuthProvider implements AuthProvider {
                 .stsClient(stsClient)
                 .refreshRequest(assumeRoleRequest)
                 .build();
-    }
-
-    /**
-     * Extracts the role name from the ARN.
-     * @param roleArn The ARN of the role to assume
-     * @return
-     */
-    static String getRoleNameFromArn(@NotNull String roleArn) {
-        String[] arnParts = roleArn.split("/");
-        if(arnParts.length < 2){
-            throw new IllegalArgumentException("Invalid role ARN");
-        }
-        String roleName = arnParts[arnParts.length - 1];
-        return roleName;
     }
 
     /**
