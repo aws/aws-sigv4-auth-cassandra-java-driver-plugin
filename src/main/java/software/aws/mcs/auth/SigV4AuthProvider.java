@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import javax.crypto.Mac;
@@ -53,6 +54,9 @@ import software.amazon.awssdk.auth.signer.internal.Aws4SignerUtils;
 import software.amazon.awssdk.auth.signer.internal.SignerConstant;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 
 import static software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create;
 
@@ -100,11 +104,9 @@ public class SigV4AuthProvider implements AuthProvider {
         this(create(), null);
     }
 
-    private final static DriverOption REGION_OPTION = new DriverOption() {
-            public String getPath() {
-                return "advanced.auth-provider.aws-region";
-            }
-        };
+    private final static DriverOption REGION_OPTION = () -> "advanced.auth-provider.aws-region";
+
+    private final static DriverOption ROLE_OPTION = () -> "advanced.auth-provider.aws-role-arn";
 
     /**
      * This constructor is provided so that the driver can create
@@ -130,7 +132,8 @@ public class SigV4AuthProvider implements AuthProvider {
      * Unused for this plugin.
      */
     public SigV4AuthProvider(DriverContext driverContext) {
-        this(driverContext.getConfig().getDefaultProfile().getString(REGION_OPTION, null));
+        this(driverContext.getConfig().getDefaultProfile().getString(REGION_OPTION, getDefaultRegion()),
+             driverContext.getConfig().getDefaultProfile().getString(ROLE_OPTION, null));
     }
 
     /**
@@ -144,6 +147,17 @@ public class SigV4AuthProvider implements AuthProvider {
     }
 
     /**
+     * Create a new Provider, using the specified region and IAM role to assume.
+     * @param region the region (e.g. us-east-1) to use for signing. A
+     * null value indicates to use the AWS_REGION environment
+     * variable, or the "aws.region" system property to configure it.
+     * @param roleArn The IAM Role ARN which the connecting client should assume before connecting with Amazon Keyspaces.
+     */
+    public SigV4AuthProvider(final String region,final String roleArn) {
+        this(Optional.ofNullable(roleArn).map(r->(AwsCredentialsProvider)createSTSRoleCredentialProvider(r,region)).orElse(create()), region);
+    }
+
+    /**
      * Create a new Provider, using the specified AWSCredentialsProvider and region.
      * @param credentialsProvider the credentials provider used to obtain signature material
      * @param region the region (e.g. us-east-1) to use for signing. A
@@ -154,9 +168,7 @@ public class SigV4AuthProvider implements AuthProvider {
         this.credentialsProvider = credentialsProvider;
 
         if (region == null) {
-            DefaultAwsRegionProviderChain chain = new DefaultAwsRegionProviderChain();
-            Region defaultRegion = chain.getRegion();
-            this.signingRegion = defaultRegion.toString().toLowerCase();
+            this.signingRegion = getDefaultRegion();
         } else {
             this.signingRegion = region.toLowerCase();
         }
@@ -372,5 +384,37 @@ public class SigV4AuthProvider implements AuthProvider {
 
         // Loop exhaustion means we did not find it
         return -1;
+    }
+
+
+    /**
+     * Creates a STS role credential provider
+     * @param roleArn The ARN of the role to assume
+     * @param stsRegion The region of the STS endpoint
+     * @return The STS role credential provider
+     */
+    private static StsAssumeRoleCredentialsProvider createSTSRoleCredentialProvider(@NotNull String roleArn,
+                                                                            @NotNull String stsRegion) {
+        final String sessionName="keyspaces-session-"+System.currentTimeMillis();
+        StsClient stsClient = StsClient.builder()
+                .region(Region.of(stsRegion))
+                .build();
+        AssumeRoleRequest assumeRoleRequest=AssumeRoleRequest.builder()
+                .roleArn(roleArn)
+                .roleSessionName(sessionName)
+                .build();
+        return StsAssumeRoleCredentialsProvider.builder()
+                .stsClient(stsClient)
+                .refreshRequest(assumeRoleRequest)
+                .build();
+    }
+
+    /**
+     * Gets the default region for SigV4 if region is not provided.
+     * @return Default region
+     */
+    private static String getDefaultRegion() {
+        DefaultAwsRegionProviderChain chain = new DefaultAwsRegionProviderChain();
+        return chain.getRegion().toString().toLowerCase();
     }
 }

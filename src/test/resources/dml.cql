@@ -1,0 +1,1 @@
+INSERT into testkeyspace.testconf(id,category) values('first','first Category');

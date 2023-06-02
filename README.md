@@ -8,6 +8,7 @@ This package implements an authentication plugin for the open-source Datastax Ja
 
 The plugin depends on the AWS SDK for Java. It uses `AWSCredentialsProvider` to obtain credentials. Because the IAuthenticator interface operates at the level of `InetSocketAddress`, you must specify the service endpoint to use for the connection.
 You can provide the Region in the constructor programmatically, via the `AWS_REGION` environment variable, or via the `aws.region` system property.
+You can also provide an IAM role to assume for access to KeySpaces, programmatically or via the configuration file.
 
 The full documentation for the plugin is available at
 https://docs.aws.amazon.com/keyspaces/latest/devguide/programmatic.credentials.html#programmatic.credentials.SigV4_KEYSPACES.
@@ -35,14 +36,14 @@ You can specify the Region using one of the following four methods:
 * Constructor
 * Configuration
 
-## Environment Variable
+### Environment Variable
 
 You can use the `AWS_REGION` environment variable to match the endpoint that you are communicating with by setting it as part of your application start-up, as follows.
 
 ``` shell
 $ export AWS_Region=us-east-1
 ```
-## System Property
+### System Property
 
 You can use the `aws.region` Java system property by specifying it on the command line, as follows.
 
@@ -50,13 +51,25 @@ You can use the `aws.region` Java system property by specifying it on the comman
 $ java -Daws.region=us=east-1 ...
 ```
 
-## Constructor
+### Constructor
 
 One of the constructors for `software.aws.mcs.auth.SigV4AuthProvider` takes a `String` representing the Region that will be used for that instance.
 
-## Configuration
+### Configuration
 
-Set the Region explicitly in your `advanced.auth-provider.class` configuration (see example below), by specifying the `advanced.auth-provider.aws-region` property.
+Set the Region explicitly in your `advanced.auth-provider` configuration (see example below), by specifying the `advanced.auth-provider.aws-region` property.
+
+## Assume IAM Role Configuration
+
+You can specify an IAM role to assume for access to KeySpaces using either the constructor or the driver configuration file
+
+### Constructor
+
+One of the constructors for `software.aws.mcs.auth.SigV4AuthProvider` takes two Strings , the first representing the region and the second representing the ARN of the IAM role to assume. 
+
+### Configuration
+
+Set the IAM Role explicitly in your `advanced.auth-provider` configuration (see example below), by specifying the `advanced.auth-provider.aws-role-arn` property.
 
 ## Add the Authentication Plugin to the Application
 
@@ -119,7 +132,7 @@ To use the configuration file, set the `advanced.auth-provider.class` to `softwa
 1. Set the `advanced.auth-provider.class` to `software.aws.mcs.auth.SigV4AuthProvider`.
 1. Set `basic.load-balancing-policy.local-datacenter` to the region name. In this case, use `us-east-2`.
 
-The following is an example of this.
+The following is an example of this config without explicit role to be assumed. 
 
 ``` text
     datastax-java-driver {
@@ -131,6 +144,27 @@ The following is an example of this.
             auth-provider = {
                 class = software.aws.mcs.auth.SigV4AuthProvider
                 aws-region = us-east-2
+            }
+            ssl-engine-factory {
+                class = DefaultSslEngineFactory
+            }
+        }
+    }
+```
+
+The following is an example of this config with an explicit role to be assumed.
+
+``` text
+    datastax-java-driver {
+        basic.load-balancing-policy {
+            class = DefaultLoadBalancingPolicy
+            local-datacenter = us-east-2
+        }
+        advanced {
+            auth-provider = {
+                class = software.aws.mcs.auth.SigV4AuthProvider
+                aws-region = us-east-2
+                aws-role-arn = "arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME"
             }
             ssl-engine-factory {
                 class = DefaultSslEngineFactory
