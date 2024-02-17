@@ -29,7 +29,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 
 public class TestSigV4 {
-    static String[] DEFAULT_CONTACT_POINTS = {"127.0.0.1:9042"};
+    static String[] DEFAULT_CONTACT_POINTS = {"cassandra.us-east-1.amazonaws.com"};
 
     public static void main(String[] args) throws Exception {
         String[] contactPointsRaw = DEFAULT_CONTACT_POINTS;
@@ -58,9 +58,12 @@ public class TestSigV4 {
                 .addContactPoints(contactPoints)
                 .withAuthProvider(new SigV4AuthProvider())
                 .withSslContext(SSLContext.getDefault())
-                .withLocalDatacenter("us-west-2")
+                .withLocalDatacenter("us-east-1")
                 .build()) {
 
+            int totalConnection =session.getMetadata().getNodes().values().stream().mapToInt(oneNode->oneNode.getOpenConnections()).sum();
+
+            System.out.println(totalConnection);
             // We use execute to send a query to Cassandra. This returns a ResultSet, which is essentially a collection
             // of Row objects.
             ResultSet rs = session.execute("select release_version from system.local");
