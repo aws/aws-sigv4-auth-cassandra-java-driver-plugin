@@ -172,3 +172,41 @@ The following is an example of this config with an explicit role to be assumed.
         }
     }
 ```
+
+### Additional Helpers
+
+## Retry Policies
+The  java driver will attempt to retry idempotent request transparently to the application. If you are seeing NoHostAvailableException when using Amazon Keyspaces, replacing the default retry policy with the ones provided in this repository will be beneficial.
+
+Implementing a driver retry policy is not a replacement for an application level retry. Users of Apache Cassandra or Amazon Keyspaces should implement an application level retry mechanism for request that satisfy the applications business requirements.
+
+### AmazonKeyspacesRetryPolicy
+The Amazon Keyspaces Retry Policy is an alternative to the DefaultRetryPolicy for the Cassandra Driver. The main difference from the DefaultRetryPolicy, is the AmazonKeyspacesRetryPolicy will retry request a configurable number of times. By default, we take a conservative approach of 3 retry attempts. This driver retry policy will not throw a NoHostAvailableException. Instead, this retry policy will pass back the original exception sent back from the service.
+
+The following code shows how to include the  AmazonKeyspacesRetryPolicy to existing configuration
+
+```
+   advanced.retry-policy {
+     class =  com.aws.ssa.keyspaces.retry.AmazonKeyspacesRetryPolicy
+     max-attempts = 3
+}
+```
+### AmazonKeyspacesExponentialRetryPolicy
+In addition to the configurable retry attempts, the Amazon Keyspaces Exponential Retry Policy will add expoential backoff. Inserting an exponentially increasing delay in each retry attempt. 
+Exponential algorithm with jitter is based on the [following blog](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/). 
+
+The following code shows how to include the  AmazonKeyspacesExponentialRetryPolicy to existing configuration. 
+* max-attempts will define number of retry attempts
+* min-wait defines a minimum delay between each retry in ms. 
+* max-wait defines a upper bound of delay between each retry attempt. 
+```
+datastax-java-driver {
+     basic.request.default-idempotence = true
+     advanced.retry-policy{
+       class =  com.aws.ssa.keyspaces.retry.AmazonKeyspacesExponentialRetryPolicy
+       max-attempts = 3
+       min-wait = 10 mills
+       max-wait = 100 mills
+     }
+  }
+```
